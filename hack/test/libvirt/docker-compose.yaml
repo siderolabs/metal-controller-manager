@@ -1,0 +1,42 @@
+version: '3.7'
+
+services:
+  dnsmasq:
+    container_name: dnsmasq
+    image: quay.io/poseidon/dnsmasq:latest
+    command: ['-d']
+    networks:
+      arges:
+        ipv4_address: 172.28.1.1
+    volumes:
+      - ./dnsmasq/arges0.conf:/etc/dnsmasq.conf:Z
+      - ./dnsmasq/tftpboot:/var/lib/tftpboot
+    cap_add:
+      - NET_ADMIN
+    restart: always
+
+  ipxe:
+    container_name: ipxe
+    image: docker.io/andrewrynhard/arges-ipxe:c5e96f8-dirty
+    networks:
+      arges:
+        ipv4_address: 172.28.1.2
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./ipxe/assets:/assets
+    restart: always
+
+networks:
+  arges:
+    name: arges
+    labels:
+      talos.owned: 'true'
+      talos.cluster.name: arges
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: arges0
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16

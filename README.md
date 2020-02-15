@@ -1,14 +1,4 @@
-# project-template-kubernetes-controller
-
-Initializing a new project.
-
-```bash
-make init DOMAIN=domain.tld NAMESPACE=template
-```
-
-Rename the controller.
-
-Find all instances of `template-controller-manager` and replace it with the new controller name.
+# metal-controller-manager
 
 Generate a new API.
 

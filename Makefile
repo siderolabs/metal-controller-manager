@@ -4,7 +4,7 @@ SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
 TAG ?= $(shell git describe --tag --always --dirty)
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 REGISTRY_AND_USERNAME := $(REGISTRY)/$(USERNAME)
-NAME := template-controller-manager
+NAME := metal-controller-manager
 
 ARTIFACTS := _out
 
@@ -42,7 +42,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: $(NAMESPACE)
 commonLabels:
-  app: template-controller-manager
+  app: metal-controller-manager
 bases:
   - crd
   - rbac
@@ -73,6 +73,10 @@ container: generate ## Build the container image.
 manifests: ## Generate manifests (e.g. CRD, RBAC, etc.).
 	@$(MAKE) local-$@ DEST=./
 
+.PHONY: initramfs
+initramfs: ## Builds the agent initramfs and outputs it to the artifact directory.
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
+
 .PHONY: release
 release: manifests container ## Create the release YAML. The build result will be ouput to the specified local destination.
 	@$(MAKE) local-$@ DEST=./$(ARTIFACTS)
@@ -94,7 +98,7 @@ uninstall: manifests ## Uninstall CRDs from a cluster.
 	kubectl delete -k config/crd
 
 .PHONY: run
-run: container install ## Run the controller locally. This is for testing purposes only.
+run: install ## Run the controller locally. This is for testing purposes only.
 	@$(MAKE) docker-container TARGET_ARGS="--load"
 	@docker run --rm -it --net host -v $(PWD):/src -v $(KUBECONFIG):/root/.kube/config -e KUBECONFIG=/root/.kube/config $(REGISTRY_AND_USERNAME)/$(NAME):$(TAG)
 

@@ -38,7 +38,7 @@ ARG REGISTRY_AND_USERNAME
 ARG NAME
 ARG TAG
 RUN cd config/manager \
-  && kustomize edit set image ${REGISTRY_AND_USERNAME}/${NAME}:${TAG} \
+  && kustomize edit set image controller=${REGISTRY_AND_USERNAME}/${NAME}:${TAG} \
   && cd - \
   && kubectl kustomize config >/release.yaml
 FROM scratch AS release
@@ -48,8 +48,39 @@ FROM build AS binary
 RUN --mount=type=cache,target=/root/.cache/go-build GOOS=linux go build -ldflags "-s -w" -o /manager
 RUN chmod +x /manager
 
+FROM alpine:3.11 AS assets
+RUN apk add --no-cache curl
+RUN curl -s -o /undionly.kpxe http://boot.ipxe.org/undionly.kpxe
+RUN curl -s -o /ipxe.efi http://boot.ipxe.org/ipxe.efi
+
+FROM build AS agent-build
+RUN --mount=type=cache,target=/root/.cache/go-build GOOS=linux go build -ldflags "-s -w" -o /agent ./cmd/agent
+RUN chmod +x /agent
+
+FROM scratch AS agent
+COPY --from=docker.io/autonomy/ca-certificates:v0.1.0 / /
+COPY --from=docker.io/autonomy/fhs:v0.1.0 / /
+COPY --from=agent-build /agent /agent
+ENTRYPOINT [ "/agent" ]
+
+FROM autonomy/tools:v0.1.0 AS initramfs-archive
+ENV PATH /toolchain/bin
+RUN [ "/toolchain/bin/mkdir", "/bin" ]
+RUN [ "ln", "-s", "/toolchain/bin/bash", "/bin/sh" ]
+WORKDIR /initramfs
+COPY --from=agent /agent ./init
+RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
+
+FROM scratch AS initramfs
+COPY --from=initramfs-archive /initramfs.xz /initramfs.xz
+
 FROM scratch AS container
 COPY --from=docker.io/autonomy/ca-certificates:v0.1.0 / /
 COPY --from=docker.io/autonomy/fhs:v0.1.0 / /
+COPY --from=assets /undionly.kpxe /var/lib/arges/tftp/undionly.kpxe
+COPY --from=assets /undionly.kpxe /var/lib/arges/tftp/undionly.kpxe.0
+COPY --from=assets /ipxe.efi /var/lib/arges/tftp/ipxe.efi
+COPY --from=initramfs /initramfs.xz /var/lib/arges/env/discovery/initramfs.xz
+ADD https://github.com/talos-systems/talos/releases/download/v0.4.0-alpha.5/vmlinuz /var/lib/arges/env/discovery/vmlinuz
 COPY --from=binary /manager /manager
 ENTRYPOINT [ "/manager" ]

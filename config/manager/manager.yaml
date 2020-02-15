@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: metal-controller-manager
+  name: arges-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tftp
+  namespace: system
+spec:
+  ports:
+    - port: 69
+      targetPort: tftp
+      protocol: UDP
+  selector:
+    control-plane: metal-controller-manager
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ipxe
+  namespace: system
+spec:
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+  selector:
+    control-plane: metal-controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metal-controller-manager
+  namespace: system
+  labels:
+    control-plane: metal-controller-manager
+spec:
+  selector:
+    matchLabels:
+      control-plane: metal-controller-manager
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        control-plane: metal-controller-manager
+    spec:
+      containers:
+        - command:
+            - /manager
+          args:
+            - --enable-leader-election=false
+          image: controller:latest
+          imagePullPolicy: Always
+          name: manager
+          ports:
+            - name: tftp
+              containerPort: 69
+              protocol: UDP
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 250m
+              memory: 100Mi
+            requests:
+              cpu: 100m
+              memory: 20Mi
+      terminationGracePeriodSeconds: 10
