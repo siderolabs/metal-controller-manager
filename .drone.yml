@@ -149,3 +149,8 @@ trigger:
 
 depends_on:
   - default
+---
+kind: signature
+hmac: 0dbc642a54881f3595ab278bb06c373b66e8ded701ae9027070a9f7b5b2f38f6
+
+...
