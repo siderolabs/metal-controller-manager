@@ -189,7 +189,7 @@ func ServeIPXE(kubeconfig, namespace string) error {
 	mux.Handle("/env/", logRequest(http.StripPrefix("/env/", http.FileServer(http.Dir("/var/lib/arges/env")))))
 
 	log.Println("Listening...")
-	return http.ListenAndServe(":8080", mux)
+	return http.ListenAndServe(":8081", mux)
 }
 
 func logRequest(next http.Handler) http.Handler {

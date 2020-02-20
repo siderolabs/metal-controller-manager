@@ -4,23 +4,23 @@ kind: ClusterRole
 metadata:
   name: environment-editor-role
 rules:
-- apiGroups:
-  - metal.arges.dev
-  resources:
-  - environments
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - metal.arges.dev
-  resources:
-  - environments/status
-  verbs:
-  - get
-  - patch
-  - update
+  - apiGroups:
+      - metal.arges.dev
+    resources:
+      - environments
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - metal.arges.dev
+    resources:
+      - environments/status
+    verbs:
+      - get
+      - patch
+      - update
