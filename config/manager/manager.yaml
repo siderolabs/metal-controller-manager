@@ -61,7 +61,7 @@ spec:
               containerPort: 69
               protocol: UDP
             - name: http
-              containerPort: 8080
+              containerPort: 8081
               protocol: TCP
           env:
             - name: NAMESPACE
