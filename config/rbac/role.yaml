@@ -1,28 +1,27 @@
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: metal-controller-manager-role
+  name: manager-role
 rules:
-- apiGroups:
-  - metal.arges.dev
-  resources:
-  - environments
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - metal.arges.dev
-  resources:
-  - environments/status
-  verbs:
-  - get
-  - patch
-  - update
+  - apiGroups:
+      - metal.arges.dev
+    resources:
+      - environments
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - metal.arges.dev
+    resources:
+      - environments/status
+    verbs:
+      - get
+      - patch
+      - update
