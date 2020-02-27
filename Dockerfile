@@ -16,8 +16,7 @@ RUN go list -mod=readonly all >/dev/null
 RUN ! go mod tidy -v 2>&1 | grep .
 
 FROM build AS manifests-build
-ARG NAME
-RUN controller-gen rbac:roleName=${NAME}-role crd paths="./..." output:rbac:artifacts:config=config/rbac output:crd:artifacts:config=config/crd/bases
+RUN controller-gen rbac:roleName=manager-role crd paths="./..." output:rbac:artifacts:config=config/rbac output:crd:artifacts:config=config/crd/bases
 FROM scratch AS manifests
 COPY --from=manifests-build /src/config/crd /config/crd
 COPY --from=manifests-build /src/config/rbac /config/rbac
