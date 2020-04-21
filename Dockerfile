@@ -80,6 +80,6 @@ COPY --from=assets /undionly.kpxe /var/lib/arges/tftp/undionly.kpxe
 COPY --from=assets /undionly.kpxe /var/lib/arges/tftp/undionly.kpxe.0
 COPY --from=assets /ipxe.efi /var/lib/arges/tftp/ipxe.efi
 COPY --from=initramfs /initramfs.xz /var/lib/arges/env/discovery/initramfs.xz
-ADD https://github.com/talos-systems/talos/releases/download/v0.4.0-alpha.5/vmlinuz /var/lib/arges/env/discovery/vmlinuz
+ADD https://github.com/talos-systems/talos/releases/download/v0.4.1/vmlinuz /var/lib/arges/env/discovery/vmlinuz
 COPY --from=binary /manager /manager
 ENTRYPOINT [ "/manager" ]
