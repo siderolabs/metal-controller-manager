@@ -59,8 +59,6 @@ RUN chmod +x /agent
 FROM scratch AS agent
 COPY --from=docker.io/autonomy/ca-certificates:v0.2.0 / /
 COPY --from=docker.io/autonomy/fhs:v0.2.0 / /
-COPY --from=docker.io/autonomy/linux-firmware:v0.2.0 /lib/firmware/bnx2 /lib/firmware/bnx2
-COPY --from=docker.io/autonomy/linux-firmware:v0.2.0 /lib/firmware/bnx2x /lib/firmware/bnx2x
 COPY --from=agent-build /agent /agent
 ENTRYPOINT [ "/agent" ]
 
@@ -70,6 +68,8 @@ RUN [ "/toolchain/bin/mkdir", "/bin" ]
 RUN [ "ln", "-s", "/toolchain/bin/bash", "/bin/sh" ]
 WORKDIR /initramfs
 COPY --from=agent /agent ./init
+COPY --from=docker.io/autonomy/linux-firmware:v0.2.0 /lib/firmware/bnx2 ./lib/firmware/bnx2
+COPY --from=docker.io/autonomy/linux-firmware:v0.2.0 /lib/firmware/bnx2x ./lib/firmware/bnx2x
 RUN set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/initramfs.xz
 
 FROM scratch AS initramfs
