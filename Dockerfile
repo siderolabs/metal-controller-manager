@@ -57,12 +57,14 @@ RUN --mount=type=cache,target=/root/.cache/go-build GOOS=linux go build -ldflags
 RUN chmod +x /agent
 
 FROM scratch AS agent
-COPY --from=docker.io/autonomy/ca-certificates:v0.1.0 / /
-COPY --from=docker.io/autonomy/fhs:v0.1.0 / /
+COPY --from=docker.io/autonomy/ca-certificates:v0.2.0 / /
+COPY --from=docker.io/autonomy/fhs:v0.2.0 / /
+COPY --from=docker.io/autonomy/linux-firmware:v0.2.0 /lib/firmware/bnx2 /lib/firmware/bnx2
+COPY --from=docker.io/autonomy/linux-firmware:v0.2.0 /lib/firmware/bnx2x /lib/firmware/bnx2x
 COPY --from=agent-build /agent /agent
 ENTRYPOINT [ "/agent" ]
 
-FROM autonomy/tools:v0.1.0 AS initramfs-archive
+FROM autonomy/tools:v0.2.0 AS initramfs-archive
 ENV PATH /toolchain/bin
 RUN [ "/toolchain/bin/mkdir", "/bin" ]
 RUN [ "ln", "-s", "/toolchain/bin/bash", "/bin/sh" ]
@@ -74,10 +76,8 @@ FROM scratch AS initramfs
 COPY --from=initramfs-archive /initramfs.xz /initramfs.xz
 
 FROM scratch AS container
-COPY --from=docker.io/autonomy/ca-certificates:v0.1.0 / /
-COPY --from=docker.io/autonomy/fhs:v0.1.0 / /
-COPY --from=docker.io/autonomy/linux-firmware:v0.2.0 /lib/firmware/bnx2 /lib/firmware/bnx2
-COPY --from=docker.io/autonomy/linux-firmware:v0.2.0 /lib/firmware/bnx2x /lib/firmware/bnx2x
+COPY --from=docker.io/autonomy/ca-certificates:v0.2.0 / /
+COPY --from=docker.io/autonomy/fhs:v0.2.0 / /
 COPY --from=assets /undionly.kpxe /var/lib/arges/tftp/undionly.kpxe
 COPY --from=assets /undionly.kpxe /var/lib/arges/tftp/undionly.kpxe.0
 COPY --from=assets /ipxe.efi /var/lib/arges/tftp/ipxe.efi
