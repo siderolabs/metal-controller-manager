@@ -20,6 +20,13 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// BMC defines data about how to talk to the node via ipmitool
+type BMC struct {
+	Endpoint string `json:"endpoint"`
+	User     string `json:"user"`
+	Pass     string `json:"pass"`
+}
+
 type SystemInformation struct {
 	Manufacturer string `json:"manufacturer,omitempty"`
 	ProductName  string `json:"productName,omitempty"`
@@ -41,15 +48,16 @@ type ServerSpec struct {
 
 	SystemInformation *SystemInformation `json:"system,omitempty"`
 	CPU               *CPUInformation    `json:"cpu,omitempty"`
+	BMC               BMC                `json:"bmc,omitempty"`
 }
 
 // ServerStatus defines the observed state of Server
 type ServerStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	InUse bool `json:"inUse"`
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
 
 // Server is the Schema for the servers API
