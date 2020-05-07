@@ -26,3 +26,43 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - metal.arges.dev
+  resources:
+  - serverclasses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - metal.arges.dev
+  resources:
+  - serverclasses/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - metal.arges.dev
+  resources:
+  - servers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - metal.arges.dev
+  resources:
+  - servers/status
+  verbs:
+  - get
+  - patch
+  - update

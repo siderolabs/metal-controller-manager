@@ -77,6 +77,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Environment")
 		os.Exit(1)
 	}
+	if err = (&controllers.ServerClassReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("ServerClass"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr, controller.Options{MaxConcurrentReconciles: 10}); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ServerClass")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting TFTP server")
@@ -90,12 +98,12 @@ func main() {
 	setupLog.Info("starting iPXE server")
 
 	go func() {
-		discoeryNamespace, ok := os.LookupEnv("NAMESPACE")
+		discoveryNamespace, ok := os.LookupEnv("NAMESPACE")
 		if !ok {
 			setupLog.Error(fmt.Errorf("missing NAMESPACE environment variable"), "unable to start iPXE server", "controller", "Environment")
 		}
 
-		if err := ipxe.ServeIPXE(discoveryKubeconfig, discoeryNamespace); err != nil {
+		if err := ipxe.ServeIPXE(discoveryKubeconfig, discoveryNamespace); err != nil {
 			setupLog.Error(err, "unable to start iPXE server", "controller", "Environment")
 		}
 	}()

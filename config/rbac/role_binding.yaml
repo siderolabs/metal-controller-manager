@@ -14,11 +14,24 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: manager-server-viewer-rolebinding
+  name: manager-server-editor-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: server-viewer-role
+  name: server-editor-role
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: manager-serverclass-editor-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: serverclass-editor-role
 subjects:
   - kind: ServiceAccount
     name: default
