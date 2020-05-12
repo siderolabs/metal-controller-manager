@@ -48,7 +48,7 @@ type ServerSpec struct {
 
 	SystemInformation *SystemInformation `json:"system,omitempty"`
 	CPU               *CPUInformation    `json:"cpu,omitempty"`
-	BMC               BMC                `json:"bmc,omitempty"`
+	BMC               *BMC               `json:"bmc,omitempty"`
 }
 
 // ServerStatus defines the observed state of Server
