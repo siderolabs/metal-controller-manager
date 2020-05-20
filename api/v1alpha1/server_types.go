@@ -14,6 +14,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -41,6 +42,15 @@ type CPUInformation struct {
 	Version      string `json:"version,omitempty"`
 }
 
+// nb: we use apiextensions.JSON for the value below b/c we can't use interface{} with controller-gen.
+// found this workaround here: https://github.com/kubernetes-sigs/controller-tools/pull/126#issuecomment-630769075
+
+type ConfigPatches struct {
+	Op    string             `json:"op"`
+	Path  string             `json:"path"`
+	Value apiextensions.JSON `json:"value,omitempty"`
+}
+
 // ServerSpec defines the desired state of Server
 type ServerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -49,6 +59,7 @@ type ServerSpec struct {
 	SystemInformation *SystemInformation `json:"system,omitempty"`
 	CPU               *CPUInformation    `json:"cpu,omitempty"`
 	BMC               *BMC               `json:"bmc,omitempty"`
+	ConfigPatches     []ConfigPatches    `json:"configPatches,omitempty"`
 }
 
 // ServerStatus defines the observed state of Server

@@ -50,6 +50,20 @@ spec:
               - pass
               - user
               type: object
+            configPatches:
+              items:
+                properties:
+                  op:
+                    type: string
+                  path:
+                    type: string
+                  value:
+                    x-kubernetes-preserve-unknown-fields: true
+                required:
+                - op
+                - path
+                type: object
+              type: array
             cpu:
               properties:
                 manufacturer:
