@@ -14,7 +14,7 @@ spec:
     listKind: ServerClassList
     plural: serverclasses
     singular: serverclass
-  scope: Namespaced
+  scope: Cluster
   subresources:
     status: {}
   validation:
