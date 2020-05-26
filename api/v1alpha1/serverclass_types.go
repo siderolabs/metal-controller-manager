@@ -36,6 +36,7 @@ type ServerClassStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 
 // ServerClass is the Schema for the serverclasses API
 type ServerClass struct {
