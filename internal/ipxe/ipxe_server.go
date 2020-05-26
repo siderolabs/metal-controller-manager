@@ -25,6 +25,7 @@ import (
 	"text/template"
 
 	metalv1alpha1 "github.com/talos-systems/metal-controller-manager/api/v1alpha1"
+	"github.com/talos-systems/metal-controller-manager/internal/server"
 	agentclient "github.com/talos-systems/metal-controller-manager/pkg/client"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,8 +46,7 @@ boot
 `))
 
 var (
-	discoveryKubeconfig string
-	discoveryNamespace  string
+	apiEndpoint string
 )
 
 func bootFileHandler(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +58,6 @@ func ipxeHandler(w http.ResponseWriter, r *http.Request) {
 		config *rest.Config
 		err    error
 	)
-
 	kubeconfig, ok := os.LookupEnv("KUBECONFIG")
 	if ok {
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
@@ -91,6 +90,8 @@ func ipxeHandler(w http.ResponseWriter, r *http.Request) {
 	obj := &metalv1alpha1.Server{}
 
 	if err := c.Get(context.Background(), key, obj); err != nil {
+		// If we can't find the server then we know that discovery has not been
+		// performed yet.
 		if apierrors.IsNotFound(err) {
 			var args = struct {
 				Env metalv1alpha1.Environment
@@ -107,6 +108,7 @@ func ipxeHandler(w http.ResponseWriter, r *http.Request) {
 								"slab_nomerge",
 								"slub_debug=P",
 								"pti=on",
+								"panic=0",
 								"random.trust_cpu=on",
 								"ima_template=ima-ng",
 								"ima_appraise=fix",
@@ -114,9 +116,7 @@ func ipxeHandler(w http.ResponseWriter, r *http.Request) {
 								"ip=dhcp",
 								"console=tty0",
 								"console=ttyS0",
-								// TODO(andrewrynhard): Make this configurable.
-								"arges.namespace=" + discoveryNamespace,
-								"arges.config=" + discoveryKubeconfig,
+								"arges.endpoint=" + fmt.Sprintf("%s:%s", apiEndpoint, server.Port),
 							},
 						},
 					},
@@ -178,9 +178,8 @@ func ipxeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ServeIPXE(kubeconfig, namespace string) error {
-	discoveryKubeconfig = kubeconfig
-	discoveryNamespace = namespace
+func ServeIPXE(endpoint string) error {
+	apiEndpoint = endpoint
 
 	mux := http.NewServeMux()
 

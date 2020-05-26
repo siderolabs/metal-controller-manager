@@ -16,94 +16,144 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
+	"time"
 
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-smbios/smbios"
-	metal1alpha1 "github.com/talos-systems/metal-controller-manager/api/v1alpha1"
-	"github.com/talos-systems/metal-controller-manager/pkg/client"
+	"github.com/talos-systems/metal-controller-manager/internal/api"
 	"golang.org/x/sys/unix"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"google.golang.org/grpc"
 )
 
 func print(s *smbios.Smbios) {
-	println(s.BIOSInformation().Vendor())
-	println(s.BIOSInformation().Version())
-	println(s.BIOSInformation().ReleaseDate())
-	println(s.SystemInformation().Manufacturer())
-	println(s.SystemInformation().ProductName())
-	println(s.SystemInformation().Version())
-	println(s.SystemInformation().SerialNumber())
-	println(s.SystemInformation().SKUNumber())
-	println(s.SystemInformation().Family())
-	println(s.BaseboardInformation().Manufacturer())
-	println(s.BaseboardInformation().Product())
-	println(s.BaseboardInformation().Version())
-	println(s.BaseboardInformation().SerialNumber())
-	println(s.BaseboardInformation().AssetTag())
-	println(s.BaseboardInformation().LocationInChassis())
-	println(s.SystemEnclosure().Manufacturer())
-	println(s.SystemEnclosure().Version())
-	println(s.SystemEnclosure().SerialNumber())
-	println(s.SystemEnclosure().AssetTagNumber())
-	println(s.SystemEnclosure().SKUNumber())
-	println(s.ProcessorInformation().SocketDesignation())
-	println(s.ProcessorInformation().ProcessorManufacturer())
-	println(s.ProcessorInformation().ProcessorVersion())
-	println(s.ProcessorInformation().SerialNumber())
-	println(s.ProcessorInformation().AssetTag())
-	println(s.ProcessorInformation().PartNumber())
-	println(s.CacheInformation().SocketDesignation())
-	println(s.PortConnectorInformation().InternalReferenceDesignator())
-	println(s.PortConnectorInformation().ExternalReferenceDesignator())
-	println(s.SystemSlots().SlotDesignation())
-	println(s.BIOSLanguageInformation().CurrentLanguage())
-	println(s.GroupAssociations().GroupName())
+	log.Println(s.BIOSInformation().Vendor())
+	log.Println(s.BIOSInformation().Version())
+	log.Println(s.BIOSInformation().ReleaseDate())
+	log.Println(s.SystemInformation().Manufacturer())
+	log.Println(s.SystemInformation().ProductName())
+	log.Println(s.SystemInformation().Version())
+	log.Println(s.SystemInformation().SerialNumber())
+	log.Println(s.SystemInformation().SKUNumber())
+	log.Println(s.SystemInformation().Family())
+	log.Println(s.BaseboardInformation().Manufacturer())
+	log.Println(s.BaseboardInformation().Product())
+	log.Println(s.BaseboardInformation().Version())
+	log.Println(s.BaseboardInformation().SerialNumber())
+	log.Println(s.BaseboardInformation().AssetTag())
+	log.Println(s.BaseboardInformation().LocationInChassis())
+	log.Println(s.SystemEnclosure().Manufacturer())
+	log.Println(s.SystemEnclosure().Version())
+	log.Println(s.SystemEnclosure().SerialNumber())
+	log.Println(s.SystemEnclosure().AssetTagNumber())
+	log.Println(s.SystemEnclosure().SKUNumber())
+	log.Println(s.ProcessorInformation().SocketDesignation())
+	log.Println(s.ProcessorInformation().ProcessorManufacturer())
+	log.Println(s.ProcessorInformation().ProcessorVersion())
+	log.Println(s.ProcessorInformation().SerialNumber())
+	log.Println(s.ProcessorInformation().AssetTag())
+	log.Println(s.ProcessorInformation().PartNumber())
+	log.Println(s.CacheInformation().SocketDesignation())
+	log.Println(s.PortConnectorInformation().InternalReferenceDesignator())
+	log.Println(s.PortConnectorInformation().ExternalReferenceDesignator())
+	log.Println(s.SystemSlots().SlotDesignation())
+	log.Println(s.BIOSLanguageInformation().CurrentLanguage())
+	log.Println(s.GroupAssociations().GroupName())
 }
 
-func main() {
+func create(s *smbios.Smbios) error {
+	var endpoint *string
+	if endpoint = procfs.ProcCmdline().Get("arges.endpoint").First(); endpoint == nil {
+		return fmt.Errorf("no endpoint found")
+	}
+
+	conn, err := grpc.Dial(*endpoint, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	c := api.NewDiscoveryClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	uuid, err := s.SystemInformation().UUID()
+	if err != nil {
+		return err
+	}
+
+	_, err = c.CreateServer(ctx, &api.CreateServerRequest{
+		SystemInformation: &api.SystemInformation{
+			Uuid:         uuid.String(),
+			Manufacturer: s.SystemInformation().Manufacturer(),
+			ProductName:  s.SystemInformation().ProductName(),
+			Version:      s.SystemInformation().Version(),
+			SerialNumber: s.SystemInformation().SerialNumber(),
+			SkuNumber:    s.SystemInformation().SKUNumber(),
+			Family:       s.SystemInformation().Family(),
+		},
+		Cpu: &api.CPU{
+			Manufacturer: s.ProcessorInformation().ProcessorManufacturer(),
+			Version:      s.ProcessorInformation().ProcessorVersion(),
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setup() error {
 	if err := os.MkdirAll("/dev", 0777); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := os.MkdirAll("/proc", 0777); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := os.MkdirAll("/sys", 0777); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := os.MkdirAll("/tmp", 0777); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := unix.Mount("devtmpfs", "/dev", "devtmpfs", unix.MS_NOSUID, "mode=0755"); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := unix.Mount("proc", "/proc", "proc", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, ""); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := unix.Mount("sysfs", "/sys", "sysfs", 0, ""); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := unix.Mount("tmpfs", "/tmp", "tmpfs", 0, ""); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	var kubeconfig *string
-	if kubeconfig = procfs.ProcCmdline().Get("arges.config").First(); kubeconfig == nil {
-		log.Fatal(fmt.Errorf("no config option was found"))
+	kmsg, err := os.OpenFile("/dev/kmsg", os.O_RDWR|unix.O_CLOEXEC|unix.O_NONBLOCK|unix.O_NOCTTY, 0666)
+	if err != nil {
+		return fmt.Errorf("failed to open /dev/kmsg: %w", err)
+	}
+
+	log.SetOutput(kmsg)
+	log.SetPrefix("arges" + " ")
+	log.SetFlags(0)
+
+	return nil
+}
+
+func main() {
+	if err := setup(); err != nil {
+		log.Fatal(err)
 	}
 
 	s, err := smbios.New()
@@ -113,82 +163,11 @@ func main() {
 
 	print(s)
 
-	resp, err := http.Get(*kubeconfig)
-	if err != nil {
+	if err = create(s); err != nil {
 		log.Fatal(err)
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := ioutil.WriteFile("/tmp/kubeconfig", data, 0666); err != nil {
-		log.Fatal(err)
-	}
-
-	var (
-		config *rest.Config
-	)
-
-	config, err = clientcmd.BuildConfigFromFlags("", "/tmp/kubeconfig")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	c, err := client.NewClient(config)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	uid, err := s.SystemInformation().UUID()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var namespace *string
-	if namespace = procfs.ProcCmdline().Get("arges.namespace").First(); namespace == nil {
-		log.Fatal(fmt.Errorf("no namespace option was found"))
-	}
-
-	obj := &metal1alpha1.Server{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "Server",
-			APIVersion: metal1alpha1.GroupVersion.Version,
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      uid.String(),
-			Namespace: *namespace,
-		},
-	}
-
-	_, err = controllerutil.CreateOrUpdate(context.Background(), c, obj, func() error {
-		obj.Spec = metal1alpha1.ServerSpec{
-			SystemInformation: &metal1alpha1.SystemInformation{
-				Manufacturer: s.SystemInformation().Manufacturer(),
-				ProductName:  s.SystemInformation().ProductName(),
-				Version:      s.SystemInformation().Version(),
-				SerialNumber: s.SystemInformation().SerialNumber(),
-				SKUNumber:    s.SystemInformation().SKUNumber(),
-				Family:       s.SystemInformation().Family(),
-			},
-			CPU: &metal1alpha1.CPUInformation{
-				Manufacturer: s.ProcessorInformation().ProcessorManufacturer(),
-				Version:      s.ProcessorInformation().ProcessorVersion(),
-			},
-		}
-
-		return nil
-	})
-	if err != nil {
-		if !apierrors.IsAlreadyExists(err) {
-			log.Fatal(err)
-		}
-
-		log.Printf("%s already exists", uid.String())
-	} else {
-		log.Printf("Added %s", uid.String())
-	}
+	log.Println("Discovery complete")
 
 	unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
 }

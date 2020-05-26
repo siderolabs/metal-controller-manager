@@ -21,6 +21,7 @@ import (
 	metalv1alpha1 "github.com/talos-systems/metal-controller-manager/api/v1alpha1"
 	"github.com/talos-systems/metal-controller-manager/controllers"
 	"github.com/talos-systems/metal-controller-manager/internal/ipxe"
+	"github.com/talos-systems/metal-controller-manager/internal/server"
 	"github.com/talos-systems/metal-controller-manager/internal/tftp"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -44,12 +45,15 @@ func init() {
 }
 
 func main() {
-	var metricsAddr string
-	var enableLeaderElection bool
-	var discoveryKubeconfig string
+	var (
+		metricsAddr          string
+		apiEndpoint          string
+		enableLeaderElection bool
+	)
+
+	flag.StringVar(&apiEndpoint, "api-endpoint", "", "The endpoint used by the discovery environment.")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8081", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&discoveryKubeconfig, "discovery-kubeconfig", "", "The URL for the kubeconfig used by the discovery agent to add a server to the inventory.")
 
 	flag.Parse()
 
@@ -98,13 +102,24 @@ func main() {
 	setupLog.Info("starting iPXE server")
 
 	go func() {
-		discoveryNamespace, ok := os.LookupEnv("NAMESPACE")
-		if !ok {
-			setupLog.Error(fmt.Errorf("missing NAMESPACE environment variable"), "unable to start iPXE server", "controller", "Environment")
+		if apiEndpoint == "" {
+			if endpoint, ok := os.LookupEnv("API_ENDPOINT"); ok {
+				apiEndpoint = endpoint
+			} else {
+				setupLog.Error(fmt.Errorf("no api endpoint found"), "unable to start iPXE server", "controller", "Environment")
+			}
 		}
 
-		if err := ipxe.ServeIPXE(discoveryKubeconfig, discoveryNamespace); err != nil {
+		if err := ipxe.ServeIPXE(apiEndpoint); err != nil {
 			setupLog.Error(err, "unable to start iPXE server", "controller", "Environment")
+		}
+	}()
+
+	setupLog.Info("starting internal API server")
+
+	go func() {
+		if err := server.ServerAPI(); err != nil {
+			setupLog.Error(err, "unable to start API server", "controller", "Environment")
 		}
 	}()
 

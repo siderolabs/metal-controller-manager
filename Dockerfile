@@ -22,9 +22,18 @@ COPY --from=manifests-build /src/config/crd /config/crd
 COPY --from=manifests-build /src/config/rbac /config/rbac
 
 FROM build AS generate-build
+RUN apt-get update \
+    && apt-get install -y unzip \
+    && curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/protoc-3.7.1-linux-x86_64.zip -o /tmp/protoc.zip \
+    && unzip -o /tmp/protoc.zip -d /usr/local bin/protoc \
+    && unzip -o /tmp/protoc.zip -d /usr/local 'include/*' \
+    && go get github.com/golang/protobuf/protoc-gen-go@v1.3
+COPY ./internal/api/discovery.proto /internal/api/discovery.proto
+RUN protoc -I/internal/api --go_out=plugins=grpc,paths=source_relative:/internal/api discovery.proto
 RUN controller-gen object:headerFile=./hack/boilerplate.go.txt paths="./..."
 FROM scratch AS generate
 COPY --from=generate-build /src/api /api
+COPY --from=generate-build /internal/api/discovery.pb.go /internal/api/
 
 FROM k8s.gcr.io/hyperkube:v1.17.0 AS release-build
 RUN apt update -y \
