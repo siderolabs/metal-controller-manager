@@ -25,6 +25,7 @@ policies:
         - .go
       excludeSuffixes:
         - .deepcopy.go
+        - .pb.go
       header: |
         /*
         Copyright 2020 Talos Systems, Inc.
