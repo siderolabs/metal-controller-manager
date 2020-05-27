@@ -62,13 +62,8 @@ func print(s *smbios.Smbios) {
 	log.Println(s.GroupAssociations().GroupName())
 }
 
-func create(s *smbios.Smbios) error {
-	var endpoint *string
-	if endpoint = procfs.ProcCmdline().Get("arges.endpoint").First(); endpoint == nil {
-		return fmt.Errorf("no endpoint found")
-	}
-
-	conn, err := grpc.Dial(*endpoint, grpc.WithInsecure(), grpc.WithBlock())
+func create(endpoint string, s *smbios.Smbios) error {
+	conn, err := grpc.Dial(endpoint, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		return err
 	}
@@ -145,7 +140,7 @@ func setup() error {
 	}
 
 	log.SetOutput(kmsg)
-	log.SetPrefix("arges" + " ")
+	log.SetPrefix("[arges]" + " ")
 	log.SetFlags(0)
 
 	return nil
@@ -156,14 +151,21 @@ func main() {
 		log.Fatal(err)
 	}
 
+	log.Println("Reading SMBIOS")
+
 	s, err := smbios.New()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	print(s)
+	var endpoint *string
+	if endpoint = procfs.ProcCmdline().Get("arges.endpoint").First(); endpoint == nil {
+		log.Fatal(fmt.Errorf("no endpoint found"))
+	}
 
-	if err = create(s); err != nil {
+	log.Printf("Creating resource via %q", *endpoint)
+
+	if err = create(*endpoint, s); err != nil {
 		log.Fatal(err)
 	}
 
