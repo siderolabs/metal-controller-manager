@@ -53,9 +53,6 @@ type ConfigPatches struct {
 
 // ServerSpec defines the desired state of Server
 type ServerSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	SystemInformation *SystemInformation `json:"system,omitempty"`
 	CPU               *CPUInformation    `json:"cpu,omitempty"`
 	BMC               *BMC               `json:"bmc,omitempty"`
@@ -64,6 +61,7 @@ type ServerSpec struct {
 
 // ServerStatus defines the observed state of Server
 type ServerStatus struct {
+	Ready bool `json:"ready"`
 	InUse bool `json:"inUse"`
 }
 
