@@ -110,6 +110,12 @@ func (r *EnvironmentReconciler) reconcile(req ctrl.Request) (ctrl.Result, error)
 
 	l.Info("all assets saved")
 
+	env.Status.Ready = true
+
+	if err := r.Status().Update(ctx, &env); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 

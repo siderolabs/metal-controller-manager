@@ -37,20 +37,17 @@ type Initrd struct {
 
 // EnvironmentSpec defines the desired state of Environment
 type EnvironmentSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	Kernel Kernel `json:"kernel,omitempty"`
 	Initrd Initrd `json:"initrd,omitempty"`
 }
 
 // EnvironmentStatus defines the observed state of Environment
 type EnvironmentStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Ready bool `json:"ready"`
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="Kernel",type="string",JSONPath=".spec.kernel.url",description="the kernel for the environment"
 // +kubebuilder:printcolumn:name="Initrd",type="string",JSONPath=".spec.initrd.url",description="the initrd for the environment"
