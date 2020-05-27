@@ -92,8 +92,11 @@ spec:
           properties:
             inUse:
               type: boolean
+            ready:
+              type: boolean
           required:
           - inUse
+          - ready
           type: object
       type: object
   version: v1alpha1

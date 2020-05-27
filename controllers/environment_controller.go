@@ -54,6 +54,7 @@ func (r *EnvironmentReconciler) SetupWithManager(mgr ctrl.Manager, options contr
 		For(&metalv1alpha1.Environment{}).
 		Complete(r)
 }
+
 func (r *EnvironmentReconciler) reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 
