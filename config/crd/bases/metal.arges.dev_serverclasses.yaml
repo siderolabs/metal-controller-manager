@@ -8,6 +8,15 @@ metadata:
   creationTimestamp: null
   name: serverclasses.metal.arges.dev
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.serversAvailable
+    description: the number of available servers
+    name: Available
+    type: string
+  - JSONPath: .status.serversInUse
+    description: the number of servers in use
+    name: In Use
+    type: string
   group: metal.arges.dev
   names:
     kind: ServerClass
