@@ -61,8 +61,8 @@ type ServerSpec struct {
 
 // ServerStatus defines the observed state of Server
 type ServerStatus struct {
-	Ready bool `json:"ready"`
-	InUse bool `json:"inUse"`
+	Ready bool `json:"ready,omitempty"`
+	InUse bool `json:"inUse,omitempty"`
 }
 
 // +kubebuilder:object:root=true
