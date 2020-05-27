@@ -8,6 +8,15 @@ metadata:
   creationTimestamp: null
   name: environments.metal.arges.dev
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.kernel.url
+    description: the kernel for the environment
+    name: Kernel
+    type: string
+  - JSONPath: .spec.initrd.url
+    description: the initrd for the environment
+    name: Initrd
+    type: string
   group: metal.arges.dev
   names:
     kind: Environment
@@ -15,6 +24,7 @@ spec:
     plural: environments
     singular: environment
   scope: Cluster
+  subresources: {}
   validation:
     openAPIV3Schema:
       description: Environment is the Schema for the environments API
