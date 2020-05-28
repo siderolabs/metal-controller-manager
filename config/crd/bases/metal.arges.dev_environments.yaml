@@ -17,6 +17,10 @@ spec:
     description: the initrd for the environment
     name: Initrd
     type: string
+  - JSONPath: .status.conditions[?(@.type=="Ready")].status
+    description: indicates the readiness of the environment
+    name: Ready
+    type: string
   group: metal.arges.dev
   names:
     kind: Environment
@@ -67,10 +71,24 @@ spec:
         status:
           description: EnvironmentStatus defines the observed state of Environment
           properties:
-            ready:
-              type: boolean
+            conditions:
+              items:
+                properties:
+                  sha512:
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    type: string
+                  url:
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              type: array
           required:
-          - ready
+          - conditions
           type: object
       type: object
   version: v1alpha1
