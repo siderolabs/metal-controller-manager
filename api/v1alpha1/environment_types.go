@@ -49,7 +49,7 @@ type AssetCondition struct {
 
 // EnvironmentStatus defines the observed state of Environment
 type EnvironmentStatus struct {
-	Conditions []AssetCondition `json:"conditions"`
+	Conditions []AssetCondition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
